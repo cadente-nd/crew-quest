@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import { timingSafeEqual } from "crypto";
 import { dbConnect } from "@/lib/db";
-import { Event, Topic, Player, PushLog } from "@/models";
-import { pushText, topicOpenMessage } from "@/lib/line";
+import { Event, Topic } from "@/models";
+import { pushTopicOpen } from "@/lib/topics";
 import { env } from "@/lib/env";
 import { ok, fail } from "@/lib/http";
 
@@ -39,19 +39,7 @@ async function tick(req: NextRequest) {
         { new: true }
       );
       if (!claimed) continue; // another tick claimed it
-
-      const ev = await Event.findById(topic.eventId);
-      if (!ev) continue;
-      const link = env().APP_BASE_URL.replace(/\/$/, "") + `/event/${ev._id}`;
-      const players = await Player.find({ eventId: topic.eventId, isBotFriend: true });
-      for (const p of players) {
-        try {
-          await pushText(p.lineUserId, topicOpenMessage(topic.title, topic.windowMinutes, link));
-          await PushLog.create({ eventId: ev._id, topicId: topic._id, lineUserId: p.lineUserId, type: "topic_open", success: true });
-        } catch (e) {
-          await PushLog.create({ eventId: ev._id, topicId: topic._id, lineUserId: p.lineUserId, type: "topic_open", success: false, error: (e as Error).message });
-        }
-      }
+      await pushTopicOpen(claimed);
       pushed++;
     }
 
