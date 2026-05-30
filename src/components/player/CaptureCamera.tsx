@@ -9,7 +9,7 @@ interface Props {
 /** Live camera via getUserMedia, with a file-input fallback for restricted in-app browsers. */
 export function CaptureCamera({ onCapture }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [unsupported, setUnsupported] = useState(false);
 
   useEffect(() => {
@@ -18,13 +18,13 @@ export function CaptureCamera({ onCapture }: Props) {
       try {
         const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
         if (!active) { s.getTracks().forEach((t) => t.stop()); return; }
-        setStream(s);
+        streamRef.current = s;
         if (videoRef.current) { videoRef.current.srcObject = s; await videoRef.current.play(); }
       } catch {
         setUnsupported(true);
       }
     })();
-    return () => { active = false; stream?.getTracks().forEach((t) => t.stop()); };
+    return () => { active = false; streamRef.current?.getTracks().forEach((t) => t.stop()); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

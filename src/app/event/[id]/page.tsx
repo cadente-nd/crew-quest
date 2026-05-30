@@ -16,10 +16,12 @@ export default function EventHome() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    let timer: ReturnType<typeof setInterval>;
+    let cancelled = false;
+    let timer: ReturnType<typeof setInterval> | undefined;
     (async () => {
       try {
         const p = await ensureLogin();
+        if (cancelled) return;
         setNotFriend(!p.isBotFriend);
         setBotId(process.env.NEXT_PUBLIC_LINE_BOT_BASIC_ID ?? "");
         const load = async () => {
@@ -29,12 +31,16 @@ export default function EventHome() {
           else setError(json.error);
         };
         await load();
-        timer = setInterval(load, 15000); // refresh to catch topic open/close
+        if (cancelled) return;
+        timer = setInterval(load, 15000);
       } catch (e) {
-        setError((e as Error).message);
+        if (!cancelled) setError((e as Error).message);
       }
     })();
-    return () => clearInterval(timer);
+    return () => {
+      cancelled = true;
+      if (timer) clearInterval(timer);
+    };
   }, [id]);
 
   if (error) return <p style={{ padding: 24, color: "#D64545" }}>{error}</p>;

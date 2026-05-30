@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ensureLogin } from "@/lib/liff";
 import { CaptureCamera } from "@/components/player/CaptureCamera";
@@ -14,8 +14,15 @@ export default function CapturePage() {
   const [done, setDone] = useState(false);
   const [err, setErr] = useState("");
 
+  useEffect(() => {
+    return () => { if (preview) URL.revokeObjectURL(preview.url); };
+  }, [preview]);
+
   function onCapture(blob: Blob) {
-    setPreview({ blob, url: URL.createObjectURL(blob) });
+    setPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev.url);
+      return { blob, url: URL.createObjectURL(blob) };
+    });
   }
 
   async function submit() {
@@ -54,7 +61,7 @@ export default function CapturePage() {
           <img src={preview.url} alt="preview" style={{ width: "100%", borderRadius: 16 }} />
           {err && <p style={{ color: "#D64545" }}>{err}</p>}
           <Button onClick={submit} disabled={busy}>{busy ? "Uploading…" : "Use this photo"}</Button>
-          <Button variant="ghost" onClick={() => setPreview(null)} disabled={busy}>Retake</Button>
+          <Button variant="ghost" onClick={() => { if (preview) URL.revokeObjectURL(preview.url); setPreview(null); }} disabled={busy}>Retake</Button>
         </>
       ) : (
         <CaptureCamera onCapture={onCapture} />
