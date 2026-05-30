@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { dbConnect } from "@/lib/db";
 import { Event, Topic, Player, Submission } from "@/models";
 import { verifyLiffIdToken } from "@/lib/liffVerify";
+import { AuthError } from "@/lib/auth-guards";
 import { processImage } from "@/lib/images";
 import { putObject } from "@/lib/storage";
 import { ok, fail } from "@/lib/http";
@@ -82,6 +83,7 @@ export async function POST(req: NextRequest) {
       throw e;
     }
   } catch (e) {
+    if (e instanceof AuthError) return fail(e.message, e.status);
     console.error("submissions POST", e);
     return fail("internal server error", 500);
   }

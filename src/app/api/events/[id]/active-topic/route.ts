@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { dbConnect } from "@/lib/db";
 import { Event, Topic, Player, Submission } from "@/models";
 import { verifyLiffIdToken } from "@/lib/liffVerify";
+import { AuthError } from "@/lib/auth-guards";
 import { topicToDTO } from "@/lib/dto";
 import { ok, fail } from "@/lib/http";
 import type { ActiveTopicDTO } from "@/types";
@@ -49,6 +50,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     };
     return ok(payload);
   } catch (e) {
+    if (e instanceof AuthError) return fail(e.message, e.status);
     console.error("active-topic GET", e);
     return fail("internal server error", 500);
   }

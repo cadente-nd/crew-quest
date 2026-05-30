@@ -3,6 +3,7 @@ import { z, ZodError } from "zod";
 import { dbConnect } from "@/lib/db";
 import { Event, Player } from "@/models";
 import { verifyLiffIdToken } from "@/lib/liffVerify";
+import { AuthError } from "@/lib/auth-guards";
 import { eventToDTO } from "@/lib/dto";
 import { ok, fail } from "@/lib/http";
 
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return ok({ event: eventToDTO(ev), playerId: String(player._id) });
   } catch (e) {
     if (e instanceof ZodError) return fail("invalid request", 400);
+    if (e instanceof AuthError) return fail(e.message, e.status);
     console.error("join POST", e);
     return fail("internal server error", 500);
   }
