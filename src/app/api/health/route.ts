@@ -8,6 +8,7 @@ export async function GET() {
     await dbConnect();
     return ok({ status: "healthy", db: "connected" });
   } catch (e) {
-    return fail("db connection failed: " + (e as Error).message, 500);
+    console.error("health GET", e);
+    return fail("internal error", 500);
   }
 }

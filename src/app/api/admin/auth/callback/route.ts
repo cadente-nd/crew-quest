@@ -28,7 +28,8 @@ export async function GET(req: NextRequest) {
     session.displayName = name;
     await session.save();
     return NextResponse.redirect(env().APP_BASE_URL.replace(/\/$/, "") + "/admin/events");
-  } catch {
+  } catch (e) {
+    console.error("admin oauth callback", e);
     return NextResponse.redirect(env().APP_BASE_URL.replace(/\/$/, "") + "/admin?error=auth");
   }
 }

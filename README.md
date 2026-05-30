@@ -161,7 +161,7 @@ curl localhost:3000/api/health  # should return {"ok":true,...}
 ### Vercel deploy
 - Set all env vars in the Vercel project settings.
 - `vercel.json` registers the 1-minute cron automatically on deploy.
-- Vercel Cron calls `GET /api/cron/tick` with `Authorization: Bearer $CRON_SECRET` (Vercel's built-in cron auth). The route also accepts `POST` with the `x-cron-secret: $CRON_SECRET` header for **manual testing** (e.g. `curl -X POST https://<your-app>/api/cron/tick -H "x-cron-secret: <secret>"`).
+- Vercel Cron sends `GET /api/cron/tick`; when `CRON_SECRET` is set as a Vercel project env var, Vercel automatically includes `Authorization: Bearer $CRON_SECRET` on every cron request. For manual testing, call the endpoint with `GET` or `POST` and add the header `x-cron-secret: $CRON_SECRET` (e.g. `curl -X POST https://<your-app>/api/cron/tick -H "x-cron-secret: <secret>"`).
 
 ### Security notes
 - **Reveal data is public once revealed (by design).** `GET /api/events/[id]/reveal-data` requires no login once `status === "revealed"`, so the slideshow can be opened on a shared big screen outside LINE. Anyone with the event ID can view photos and names after reveal. This is an intentional tradeoff for frictionless group viewing — be aware when sharing event IDs.

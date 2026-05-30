@@ -13,16 +13,11 @@ export default async function AdminLogin({
       <h1 style={{ fontSize: 32, fontWeight: 800 }}>Crew Quest Admin</h1>
       {error === "forbidden" && <p style={{ color: "#D64545" }}>That LINE account is not on the allowlist.</p>}
       {error && error !== "forbidden" && <p style={{ color: "#D64545" }}>Login failed. Try again.</p>}
-      <a href="/api/admin/auth/login">
-        <button
-          style={{
-            width: "100%", padding: 16, fontSize: 18, fontWeight: 700,
-            borderRadius: "1.25rem", border: "none", color: "#fff",
-            background: "#06C755", cursor: "pointer",
-          }}
-        >
-          Log in with LINE
-        </button>
+      <a
+        href="/api/admin/auth/login"
+        style={{ display: "block", textAlign: "center", width: "100%", padding: 16, fontSize: 18, fontWeight: 700, borderRadius: "1.25rem", color: "#fff", background: "#06C755", textDecoration: "none", boxSizing: "border-box" }}
+      >
+        Log in with LINE
       </a>
     </main>
   );

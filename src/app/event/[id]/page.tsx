@@ -59,10 +59,11 @@ export default function EventHome() {
         </div>
       )}
       {data.eventStatus === "revealed" && (
-        <a href={`/event/${id}/reveal`} style={{ display: "block", marginTop: 16 }}>
-          <button style={{ width: "100%", padding: 16, borderRadius: 20, border: "none", background: "#A06CD5", color: "#fff", fontWeight: 800, fontSize: 18 }}>
-            🎬 Watch the reveal
-          </button>
+        <a
+          href={`/event/${id}/reveal`}
+          style={{ display: "block", marginTop: 16, textAlign: "center", padding: 16, borderRadius: 20, background: "#A06CD5", color: "#fff", fontWeight: 800, fontSize: 18, textDecoration: "none", boxSizing: "border-box" }}
+        >
+          🎬 Watch the reveal
         </a>
       )}
     </main>
