@@ -1,8 +1,7 @@
-import { jwtVerify, createRemoteJWKSet } from "jose";
+import { jwtVerify } from "jose";
 import { env } from "@/lib/env";
 
 const REDIRECT_PATH = "/api/admin/auth/callback";
-const JWKS = createRemoteJWKSet(new URL("https://api.line.me/oauth2/v2.1/certs"));
 
 export function redirectUri() {
   return env().APP_BASE_URL.replace(/\/$/, "") + REDIRECT_PATH;
@@ -45,7 +44,10 @@ export async function exchangeCode(code: string): Promise<TokenResponse> {
 
 /** Verify the LINE id_token signature and claims; returns the LINE userId (sub) and name. */
 export async function verifyIdToken(idToken: string): Promise<{ sub: string; name: string }> {
-  const { payload } = await jwtVerify(idToken, JWKS, {
+  // LINE signs the id_token with HS256 using the channel secret as the HMAC key,
+  // so it must be verified with the secret — not the asymmetric JWKS certs endpoint.
+  const secret = new TextEncoder().encode(env().LINE_LOGIN_CHANNEL_SECRET);
+  const { payload } = await jwtVerify(idToken, secret, {
     issuer: "https://access.line.me",
     audience: env().LINE_LOGIN_CHANNEL_ID,
     requiredClaims: ["sub"],
