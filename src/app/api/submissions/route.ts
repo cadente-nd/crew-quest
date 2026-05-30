@@ -82,6 +82,7 @@ export async function POST(req: NextRequest) {
       throw e;
     }
   } catch (e) {
-    return fail((e as Error).message, 400);
+    console.error("submissions POST", e);
+    return fail("internal server error", 500);
   }
 }

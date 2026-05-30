@@ -49,6 +49,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     };
     return ok(payload);
   } catch (e) {
-    return fail((e as Error).message, 400);
+    console.error("active-topic GET", e);
+    return fail("internal server error", 500);
   }
 }

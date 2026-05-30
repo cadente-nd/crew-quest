@@ -40,6 +40,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
     return ok({ eventName: ev.name, items });
   } catch (e) {
-    return fail((e as Error).message, 400);
+    console.error("reveal-data GET", e);
+    return fail("internal server error", 500);
   }
 }

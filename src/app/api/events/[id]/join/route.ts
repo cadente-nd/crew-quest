@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { z } from "zod";
+import { z, ZodError } from "zod";
 import { dbConnect } from "@/lib/db";
 import { Event, Player } from "@/models";
 import { verifyLiffIdToken } from "@/lib/liffVerify";
@@ -47,6 +47,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     return ok({ event: eventToDTO(ev), playerId: String(player._id) });
   } catch (e) {
-    return fail((e as Error).message, 400);
+    if (e instanceof ZodError) return fail("invalid request", 400);
+    console.error("join POST", e);
+    return fail("internal server error", 500);
   }
 }

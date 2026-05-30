@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { z } from "zod";
+import { z, ZodError } from "zod";
 import { dbConnect } from "@/lib/db";
 import { Event, Topic } from "@/models";
 import { requireAdmin, AuthError } from "@/lib/auth-guards";
@@ -42,7 +42,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return ok(topicToDTO(topic), 201);
   } catch (e) {
     if (e instanceof AuthError) return fail(e.message, e.status);
-    return fail((e as Error).message, 400);
+    if (e instanceof ZodError) return fail("invalid request", 400);
+    console.error("topics POST", e);
+    return fail("internal server error", 500);
   }
 }
 
@@ -55,6 +57,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     return ok(topics.map(topicToDTO));
   } catch (e) {
     if (e instanceof AuthError) return fail(e.message, e.status);
-    return fail((e as Error).message, 400);
+    console.error("topics GET", e);
+    return fail("internal server error", 500);
   }
 }

@@ -17,6 +17,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     return ok(eventToDTO(ev));
   } catch (e) {
     if (e instanceof AuthError) return fail(e.message, e.status);
-    return fail((e as Error).message, 400);
+    console.error("reveal POST", e);
+    return fail("internal server error", 500);
   }
 }
