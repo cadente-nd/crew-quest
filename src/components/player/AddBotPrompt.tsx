@@ -8,10 +8,14 @@ export function AddBotPrompt({ botBasicId }: { botBasicId: string }) {
       <p style={{ margin: "6px 0 12px", fontSize: 14, color: "#876" }}>
         You won&apos;t receive topic notifications until you add us as a friend.
       </p>
-      <a href={href} target="_blank" rel="noreferrer">
-        <button style={{ padding: "10px 16px", borderRadius: 12, border: "none", background: "#06C755", color: "#fff", fontWeight: 700 }}>
-          Add friend
-        </button>
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        role="button"
+        style={{ display: "inline-block", padding: "10px 16px", borderRadius: 12, background: "#06C755", color: "#fff", fontWeight: 700, textDecoration: "none" }}
+      >
+        Add friend
       </a>
     </div>
   );

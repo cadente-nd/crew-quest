@@ -28,6 +28,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       (id.match(/^[a-f0-9]{24}$/i) ? await Event.findById(id) : null);
     if (!ev) return fail("event not found", 404);
 
+    if (ev.status === "ended" || ev.status === "revealed") {
+      return fail("this event has ended", 403);
+    }
+
     const player = await Player.findOneAndUpdate(
       { eventId: ev._id, lineUserId: verified.sub },
       {

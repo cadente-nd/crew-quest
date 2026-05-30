@@ -26,7 +26,8 @@ export async function ensureLogin(): Promise<LiffProfile> {
     return new Promise<LiffProfile>(() => {});
   }
   const profile = await liff.getProfile();
-  const idToken = liff.getIDToken() ?? "";
+  const idToken = liff.getIDToken();
+  if (!idToken) throw new Error("LINE id token unavailable — please reload the app");
   let isBotFriend = false;
   try {
     isBotFriend = (await liff.getFriendship()).friendFlag;
