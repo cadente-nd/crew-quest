@@ -2871,6 +2871,8 @@ git commit -m "docs: add setup and deployment guide"
 
 - [ ] **Step 3: Confirm cron idempotency guards** (`pushSentAt` claim-before-send; close by `closeAt`).
 
+- [ ] **Step 3b: Normalize API error handling across ALL routes** (deferred from Phase 3 review). The routes use `catch (e) { ...; return fail((e as Error).message, 400); }`, which maps infra failures (Mongo/network) to HTTP 400 and leaks raw error messages. Apply a consistent pattern in every `src/app/api/**/route.ts` catch block: keep `AuthError → fail(e.message, e.status)`; map `ZodError` (and the `z.ZodError` from `.parse`) to `fail("invalid request", 400)`; map everything else to a generic `fail("internal error", 500)` while `console.error`-ing the real error server-side. Do not echo raw exception text to clients.
+
 - [ ] **Step 4: Full build.**
 
 Run: `npm run build`
