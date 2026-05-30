@@ -7,26 +7,35 @@ import type { TopicDTO } from "@/types";
 export function TopicScheduler({ eventId, topics }: { eventId: string; topics: TopicDTO[] }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
 
   async function add(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
+    setErr("");
     const f = new FormData(e.currentTarget);
-    const res = await fetch(`/api/events/${eventId}/topics`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: f.get("title"),
-        description: f.get("description") || undefined,
-        scheduledAtLocal: f.get("scheduledAtLocal"),
-        windowMinutes: Number(f.get("windowMinutes")),
-        order: topics.length,
-      }),
-    });
-    setBusy(false);
-    if ((await res.json()).ok) {
-      (e.target as HTMLFormElement).reset();
-      router.refresh();
+    const formEl = e.currentTarget;
+    try {
+      const res = await fetch(`/api/events/${eventId}/topics`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: f.get("title"),
+          description: f.get("description") || undefined,
+          scheduledAtLocal: f.get("scheduledAtLocal"),
+          windowMinutes: Number(f.get("windowMinutes")),
+          order: topics.length,
+        }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        formEl.reset();
+        router.refresh();
+      } else setErr(json.error);
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -46,6 +55,7 @@ export function TopicScheduler({ eventId, topics }: { eventId: string; topics: T
         <input name="description" placeholder="Description (optional)" style={field} />
         <input name="scheduledAtLocal" type="datetime-local" required style={field} />
         <input name="windowMinutes" type="number" defaultValue={30} min={1} style={field} />
+        {err && <p style={{ color: "#D64545" }}>{err}</p>}
         <Button disabled={busy}>{busy ? "Adding…" : "Add topic"}</Button>
       </form>
     </section>

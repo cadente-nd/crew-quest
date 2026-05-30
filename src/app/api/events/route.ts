@@ -31,12 +31,16 @@ export async function POST(req: NextRequest) {
       joinCode = generateJoinCode();
     }
 
+    const startAt = localToUtc(body.startAtLocal, body.timezone);
+    const endAt = localToUtc(body.endAtLocal, body.timezone);
+    if (endAt <= startAt) return fail("event end must be after start", 400);
+
     const ev = await Event.create({
       name: body.name,
       timezone: body.timezone,
       joinCode,
-      startAt: localToUtc(body.startAtLocal, body.timezone),
-      endAt: localToUtc(body.endAtLocal, body.timezone),
+      startAt,
+      endAt,
       status: "draft",
       adminIds: [adminId],
       settings: { allowRetake: body.allowRetake },
