@@ -33,7 +33,9 @@ export async function POST(
           },
         },
       ],
-      { new: true },
+      // Mongoose 9 requires updatePipeline:true to accept an aggregation
+      // pipeline (array) as the update; it's false by default.
+      { new: true, updatePipeline: true },
     );
     if (!topic) return fail("topic not found or not scheduled", 404);
 
