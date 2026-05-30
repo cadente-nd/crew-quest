@@ -131,7 +131,7 @@ Reactions/voting, multi-team-within-one-event leaderboards, AI-generated topics,
 | `NEXT_PUBLIC_LIFF_ID` | LIFF app id (player auth — exposed to browser) |
 | `NEXT_PUBLIC_LINE_BOT_BASIC_ID` | Bot basic id for add-friend link (exposed to browser) |
 | `LINE_LOGIN_CHANNEL_ID` / `_SECRET` | LINE Login channel (admin OAuth + LIFF id_token verify) |
-| `ADMIN_LINE_IDS` | Comma-separated `lineUserId` allowlist for admins |
+| `ADMIN_LINE_IDS` | Comma-separated `lineUserId` allowlist for admins (optional — see "First admin" below) |
 | `ADMIN_SESSION_SECRET` | ≥32 char secret for iron-session |
 | `LINE_MESSAGING_CHANNEL_ACCESS_TOKEN` / `_SECRET` | Messaging API push channel |
 | `LINE_BOT_BASIC_ID` | Bot basic id (server-side, for push link construction) |
@@ -150,6 +150,19 @@ Reactions/voting, multi-team-within-one-event leaderboards, AI-generated topics,
 5. Note the OA's **Basic ID** (starts with `@`) → `LINE_BOT_BASIC_ID` (server) and `NEXT_PUBLIC_LINE_BOT_BASIC_ID` (browser add-friend link).
 6. **Link the OA to the Login/LIFF provider** so `getFriendship()` and push notifications work for all players.
 
+### First admin (bootstrapping)
+Admin authorization is the **union** of the `ADMIN_LINE_IDS` env allowlist and an `Admin` MongoDB
+collection. On a fresh deployment where neither has any entry, the **first successful LINE login is
+auto-promoted to admin** (trust-on-first-use) and saved to the `Admin` collection — so you don't
+need to know your LINE `userId` in advance. Once any admin exists, further logins are rejected
+unless they're already authorized.
+
+- **Claim it safely:** complete the first `/api/admin/auth/login` immediately after deploy, or
+  pre-set `ADMIN_LINE_IDS` so there's no open window — whoever logs in first on an empty system
+  becomes admin.
+- **Adding more admins:** append their `lineUserId` to `ADMIN_LINE_IDS` (a permanent break-glass
+  override) and redeploy. There is no in-app UI to add DB admins yet.
+
 ### Local dev
 ```bash
 cp .env.example .env.local   # fill in all values
@@ -166,7 +179,9 @@ curl localhost:3000/api/health  # should return {"ok":true,...}
 ### Security notes
 - **Reveal data is public once revealed (by design).** `GET /api/events/[id]/reveal-data` requires no login once `status === "revealed"`, so the slideshow can be opened on a shared big screen outside LINE. Anyone with the event ID can view photos and names after reveal. This is an intentional tradeoff for frictionless group viewing — be aware when sharing event IDs.
 - All other submission data is server-gated until reveal.
-- Admin routes are protected by LINE Login allowlist (`ADMIN_LINE_IDS`) + iron-session cookie.
+- Admin routes are protected by an iron-session cookie. Authorization is the union of the
+  `ADMIN_LINE_IDS` allowlist and the `Admin` collection, bootstrapped by first login (see
+  "First admin" above).
 
 ### Manual verification checklist (with real LINE/Mongo/Spaces)
 1. Admin logs in (allowlisted LINE account) → creates an event → schedules a topic ~2 min ahead.

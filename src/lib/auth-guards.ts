@@ -1,5 +1,5 @@
 import { getAdminSession } from "@/lib/session";
-import { adminLineIds } from "@/lib/env";
+import { isAuthorizedAdmin } from "@/lib/admins";
 
 export class AuthError extends Error {
   status: number;
@@ -13,7 +13,7 @@ export class AuthError extends Error {
 export async function requireAdmin(): Promise<string> {
   const session = await getAdminSession();
   const id = session.adminLineUserId;
-  if (!id || !adminLineIds().includes(id)) throw new AuthError("not authorized", 401);
+  if (!id || !(await isAuthorizedAdmin(id))) throw new AuthError("not authorized", 401);
   return id;
 }
 
@@ -21,5 +21,5 @@ export async function requireAdmin(): Promise<string> {
 export async function isAdmin(): Promise<boolean> {
   const session = await getAdminSession();
   const id = session.adminLineUserId;
-  return !!id && adminLineIds().includes(id);
+  return !!id && (await isAuthorizedAdmin(id));
 }

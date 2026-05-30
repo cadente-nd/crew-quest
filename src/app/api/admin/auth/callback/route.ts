@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { exchangeCode, verifyIdToken } from "@/lib/lineLogin";
 import { getAdminSession } from "@/lib/session";
-import { adminLineIds, env } from "@/lib/env";
+import { isAuthorizedAdmin, hasAnyAdmin, bootstrapFirstAdmin } from "@/lib/admins";
+import { env } from "@/lib/env";
 
 export const runtime = "nodejs";
 
@@ -20,8 +21,12 @@ export async function GET(req: NextRequest) {
   try {
     const { id_token } = await exchangeCode(code);
     const { sub, name } = await verifyIdToken(id_token);
-    if (!adminLineIds().includes(sub)) {
-      return NextResponse.redirect(env().APP_BASE_URL.replace(/\/$/, "") + "/admin?error=forbidden");
+    if (!(await isAuthorizedAdmin(sub))) {
+      // Trust-on-first-use: if no admin exists yet, the first login claims admin.
+      if (await hasAnyAdmin()) {
+        return NextResponse.redirect(env().APP_BASE_URL.replace(/\/$/, "") + "/admin?error=forbidden");
+      }
+      await bootstrapFirstAdmin(sub, name);
     }
     const session = await getAdminSession();
     session.adminLineUserId = sub;
