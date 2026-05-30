@@ -1,0 +1,57 @@
+"use client";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { ensureLogin } from "@/lib/liff";
+import { Spinner } from "@/components/ui/Spinner";
+import { TopicCard } from "@/components/player/TopicCard";
+import { ProgressHeader } from "@/components/player/ProgressHeader";
+import { AddBotPrompt } from "@/components/player/AddBotPrompt";
+import type { ActiveTopicDTO } from "@/types";
+
+export default function EventHome() {
+  const { id } = useParams<{ id: string }>();
+  const [data, setData] = useState<ActiveTopicDTO | null>(null);
+  const [notFriend, setNotFriend] = useState(false);
+  const [botId, setBotId] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setInterval>;
+    (async () => {
+      try {
+        const p = await ensureLogin();
+        setNotFriend(!p.isBotFriend);
+        setBotId(process.env.NEXT_PUBLIC_LINE_BOT_BASIC_ID ?? "");
+        const load = async () => {
+          const res = await fetch(`/api/events/${id}/active-topic`, { headers: { "x-line-id-token": p.idToken } });
+          const json = await res.json();
+          if (json.ok) setData(json.data);
+          else setError(json.error);
+        };
+        await load();
+        timer = setInterval(load, 15000); // refresh to catch topic open/close
+      } catch (e) {
+        setError((e as Error).message);
+      }
+    })();
+    return () => clearInterval(timer);
+  }, [id]);
+
+  if (error) return <p style={{ padding: 24, color: "#D64545" }}>{error}</p>;
+  if (!data) return <Spinner />;
+
+  return (
+    <main style={{ padding: 20 }}>
+      <ProgressHeader completed={data.completed} total={data.total} />
+      {notFriend && <AddBotPrompt botBasicId={botId} />}
+      {data.topic ? (
+        <TopicCard topic={data.topic} eventId={id} alreadySubmitted={data.alreadySubmitted} />
+      ) : (
+        <div style={{ padding: 32, textAlign: "center", color: "#888" }}>
+          <p style={{ fontSize: 22 }}>No active topic right now ✨</p>
+          <p>Keep your notifications on — the next one drops soon!</p>
+        </div>
+      )}
+    </main>
+  );
+}
