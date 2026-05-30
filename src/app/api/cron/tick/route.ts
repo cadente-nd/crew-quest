@@ -7,6 +7,7 @@ import { env } from "@/lib/env";
 import { ok, fail } from "@/lib/http";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 function secretOk(req: NextRequest): boolean {
   const expected = env().CRON_SECRET;
@@ -16,7 +17,7 @@ function secretOk(req: NextRequest): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-export async function POST(req: NextRequest) {
+async function tick(req: NextRequest) {
   if (!secretOk(req)) return fail("forbidden", 401);
 
   await dbConnect();
@@ -46,9 +47,9 @@ export async function POST(req: NextRequest) {
     for (const p of players) {
       try {
         await pushText(p.lineUserId, topicOpenMessage(topic.title, topic.windowMinutes, link));
-        await PushLog.create({ eventId: ev._id, topicId: topic._id, type: "topic_open", success: true });
+        await PushLog.create({ eventId: ev._id, topicId: topic._id, lineUserId: p.lineUserId, type: "topic_open", success: true });
       } catch (e) {
-        await PushLog.create({ eventId: ev._id, topicId: topic._id, type: "topic_open", success: false, error: (e as Error).message });
+        await PushLog.create({ eventId: ev._id, topicId: topic._id, lineUserId: p.lineUserId, type: "topic_open", success: false, error: (e as Error).message });
       }
     }
     pushed++;
@@ -65,3 +66,6 @@ export async function POST(req: NextRequest) {
 
   return ok({ openedAndPushed: pushed, closed: closed.modifiedCount, at: now.toISOString() });
 }
+
+export const GET = tick;
+export const POST = tick;

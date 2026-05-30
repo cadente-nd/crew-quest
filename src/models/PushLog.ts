@@ -3,6 +3,7 @@ import { Schema, model, models, type InferSchemaType, type Model } from "mongoos
 const PushLogSchema = new Schema({
   eventId: { type: Schema.Types.ObjectId, ref: "Event", required: true },
   topicId: { type: Schema.Types.ObjectId, ref: "Topic", required: true },
+  lineUserId: { type: String, default: "" },
   type: { type: String, default: "topic_open" },
   sentAt: { type: Date, default: () => new Date() },
   success: { type: Boolean, default: true },
