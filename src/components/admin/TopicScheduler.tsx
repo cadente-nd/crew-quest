@@ -70,7 +70,11 @@ export function TopicScheduler({ eventId, topics }: { eventId: string; topics: T
               <strong>{t.title}</strong> — {new Date(t.scheduledAt).toLocaleString()} · {t.windowMinutes}m · {t.status}
             </span>
             {t.status === "scheduled" && (
-              <Button onClick={() => fireNow(t.id)} disabled={firingId === t.id}>
+              <Button
+                onClick={() => fireNow(t.id)}
+                disabled={firingId === t.id}
+                style={{ width: "auto", flexShrink: 0, padding: "8px 14px", fontSize: 14 }}
+              >
                 {firingId === t.id ? "Firing…" : "🔥 Fire now"}
               </Button>
             )}
