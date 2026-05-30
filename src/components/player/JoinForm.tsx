@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ensureLogin } from "@/lib/liff";
+import { ensureLogin, reloginForFreshToken, clearReloginGuard } from "@/lib/liff";
 import { Button } from "@/components/ui/Button";
 
 export function JoinForm({ initialCode }: { initialCode?: string }) {
@@ -25,9 +25,15 @@ export function JoinForm({ initialCode }: { initialCode?: string }) {
           isBotFriend: p.isBotFriend,
         }),
       });
+      if (res.status === 401) {
+        await reloginForFreshToken();
+        return;
+      }
       const json = await res.json();
-      if (json.ok) router.replace(`/event/${json.data.event.id}`);
-      else setErr(json.error);
+      if (json.ok) {
+        clearReloginGuard();
+        router.replace(`/event/${json.data.event.id}`);
+      } else setErr(json.error);
     } catch (e) {
       setErr((e as Error).message);
     } finally {

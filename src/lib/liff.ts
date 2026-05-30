@@ -18,6 +18,35 @@ export async function initLiff(): Promise<void> {
   initialized = true;
 }
 
+const RELOGIN_FLAG = "cq-relogin-attempted";
+
+/**
+ * Re-login to mint a fresh id_token after the server rejected an expired one
+ * (HTTP 401), then return to the current page. liff.getIDToken() returns the
+ * token cached at login, which expires while isLoggedIn() (access token) stays
+ * true — so the only way to refresh it is to log in again. liff.login()
+ * navigates away, so this never resolves on the happy path.
+ *
+ * Guarded against an infinite redirect loop: if we already re-logged in once
+ * this navigation and STILL got 401, throw instead of redirecting again (that
+ * points to a channel-id misconfig, not an expired token).
+ */
+export async function reloginForFreshToken(): Promise<never> {
+  if (sessionStorage.getItem(RELOGIN_FLAG)) {
+    sessionStorage.removeItem(RELOGIN_FLAG);
+    throw new Error("Your LINE session expired. Please reopen the app from the LINE chat.");
+  }
+  sessionStorage.setItem(RELOGIN_FLAG, "1");
+  await initLiff();
+  liff.login({ redirectUri: window.location.href });
+  return new Promise<never>(() => {});
+}
+
+/** Clear the relogin guard once a request succeeded with the current token. */
+export function clearReloginGuard(): void {
+  sessionStorage.removeItem(RELOGIN_FLAG);
+}
+
 export async function ensureLogin(): Promise<LiffProfile> {
   await initLiff();
   if (!liff.isLoggedIn()) {

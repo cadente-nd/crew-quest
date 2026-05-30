@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ensureLogin } from "@/lib/liff";
+import { ensureLogin, reloginForFreshToken, clearReloginGuard } from "@/lib/liff";
 import { CaptureCamera } from "@/components/player/CaptureCamera";
 import { Confetti } from "@/components/Confetti";
 import { Button } from "@/components/ui/Button";
@@ -37,8 +37,13 @@ export default function CapturePage() {
       fd.set("topicId", topicId);
       fd.set("photo", preview.blob, "capture.jpg");
       const res = await fetch("/api/submissions", { method: "POST", body: fd });
+      if (res.status === 401) {
+        await reloginForFreshToken();
+        return;
+      }
       const json = await res.json();
       if (json.ok) {
+        clearReloginGuard();
         setDone(true);
         setTimeout(() => router.replace(`/event/${id}`), 1800);
       } else setErr(json.error);

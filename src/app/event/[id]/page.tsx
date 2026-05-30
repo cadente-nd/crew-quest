@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { ensureLogin } from "@/lib/liff";
+import { ensureLogin, reloginForFreshToken, clearReloginGuard } from "@/lib/liff";
 import { Spinner } from "@/components/ui/Spinner";
 import { TopicCard } from "@/components/player/TopicCard";
 import { ProgressHeader } from "@/components/player/ProgressHeader";
@@ -26,9 +26,16 @@ export default function EventHome() {
         setBotId(process.env.NEXT_PUBLIC_LINE_BOT_BASIC_ID ?? "");
         const load = async () => {
           const res = await fetch(`/api/events/${id}/active-topic`, { headers: { "x-line-id-token": p.idToken } });
+          if (res.status === 401) {
+            // id_token expired mid-session — refresh it and reload.
+            await reloginForFreshToken();
+            return;
+          }
           const json = await res.json();
-          if (json.ok) setData(json.data);
-          else setError(json.error);
+          if (json.ok) {
+            clearReloginGuard();
+            setData(json.data);
+          } else setError(json.error);
         };
         await load();
         if (cancelled) return;
