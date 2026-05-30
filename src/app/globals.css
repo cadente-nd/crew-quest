@@ -3,6 +3,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --max-w: 480px;
 }
 
 @theme inline {
@@ -19,8 +20,12 @@
   }
 }
 
+html, body { height: 100%; }
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  -webkit-tap-highlight-color: transparent;
+  background: #FAFAFC;
+  color: #1A1A2E;
+  font-family: ui-rounded, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
+.app-shell { max-width: var(--max-w); margin: 0 auto; min-height: 100%; }
