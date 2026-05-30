@@ -117,3 +117,61 @@ Reactions/voting, multi-team-within-one-event leaderboards, AI-generated topics,
 4. Cron endpoint + push notification integration.
 5. The reveal slideshow.
 6. `README` covering required env vars: `LIFF_ID`, LINE Login channel, LINE Messaging API channel access token, `MONGODB_URI`, image-storage keys, and `CRON_SECRET`
+
+---
+
+## Setup & Deployment
+
+### Environment variables
+
+| Var | Purpose |
+| --- | --- |
+| `MONGODB_URI` | MongoDB Atlas connection string |
+| `APP_BASE_URL` | Public base URL (LIFF endpoint + OAuth callback base) |
+| `NEXT_PUBLIC_LIFF_ID` | LIFF app id (player auth — exposed to browser) |
+| `NEXT_PUBLIC_LINE_BOT_BASIC_ID` | Bot basic id for add-friend link (exposed to browser) |
+| `LINE_LOGIN_CHANNEL_ID` / `_SECRET` | LINE Login channel (admin OAuth + LIFF id_token verify) |
+| `ADMIN_LINE_IDS` | Comma-separated `lineUserId` allowlist for admins |
+| `ADMIN_SESSION_SECRET` | ≥32 char secret for iron-session |
+| `LINE_MESSAGING_CHANNEL_ACCESS_TOKEN` / `_SECRET` | Messaging API push channel |
+| `LINE_BOT_BASIC_ID` | Bot basic id (server-side, for push link construction) |
+| `SPACES_ENDPOINT` | DigitalOcean Spaces endpoint URL (e.g. `https://sgp1.digitaloceanspaces.com`) |
+| `SPACES_REGION` | Spaces region (e.g. `sgp1`) |
+| `SPACES_BUCKET` | Spaces bucket name |
+| `SPACES_KEY` / `SPACES_SECRET` | Spaces access key and secret |
+| `SPACES_CDN_BASE_URL` | CDN base URL for public image links (optional) |
+| `CRON_SECRET` | Shared secret for `/api/cron/tick` |
+
+### LINE console setup
+1. Create one **Provider**. Under it, create a **LINE Login channel** and a **Messaging API channel** (Official Account).
+2. Create a **LIFF app** on the LINE Login channel; set its endpoint URL to `APP_BASE_URL`. Copy the LIFF ID → `NEXT_PUBLIC_LIFF_ID`.
+3. Add `APP_BASE_URL/api/admin/auth/callback` to the LINE Login channel's **callback URLs**.
+4. Issue a long-lived **channel access token** for the Messaging API channel → `LINE_MESSAGING_CHANNEL_ACCESS_TOKEN`.
+5. Note the OA's **Basic ID** (starts with `@`) → `LINE_BOT_BASIC_ID` (server) and `NEXT_PUBLIC_LINE_BOT_BASIC_ID` (browser add-friend link).
+6. **Link the OA to the Login/LIFF provider** so `getFriendship()` and push notifications work for all players.
+
+### Local dev
+```bash
+cp .env.example .env.local   # fill in all values
+npm install
+npm run dev
+curl localhost:3000/api/health  # should return {"ok":true,...}
+```
+
+### Vercel deploy
+- Set all env vars in the Vercel project settings.
+- `vercel.json` registers the 1-minute cron automatically on deploy.
+- Vercel Cron calls `GET /api/cron/tick` with `Authorization: Bearer $CRON_SECRET` (Vercel's built-in cron auth). The route also accepts `POST` with the `x-cron-secret: $CRON_SECRET` header for **manual testing** (e.g. `curl -X POST https://<your-app>/api/cron/tick -H "x-cron-secret: <secret>"`).
+
+### Security notes
+- **Reveal data is public once revealed (by design).** `GET /api/events/[id]/reveal-data` requires no login once `status === "revealed"`, so the slideshow can be opened on a shared big screen outside LINE. Anyone with the event ID can view photos and names after reveal. This is an intentional tradeoff for frictionless group viewing — be aware when sharing event IDs.
+- All other submission data is server-gated until reveal.
+- Admin routes are protected by LINE Login allowlist (`ADMIN_LINE_IDS`) + iron-session cookie.
+
+### Manual verification checklist (with real LINE/Mongo/Spaces)
+1. Admin logs in (allowlisted LINE account) → creates an event → schedules a topic ~2 min ahead.
+2. Player opens LIFF → joins by join code → adds bot if prompted.
+3. Cron opens the topic at its scheduled time and pushes; re-running cron does **not** double-push.
+4. Player captures + submits within the window; confetti fires; submission stored in Spaces + Mongo. After `closeAt`, submission is rejected with 403.
+5. Admin triggers reveal → player sees "🎬 Watch the reveal" button → slideshow plays grouped by topic.
+6. Timezone: topic opens at the correct Asia/Bangkok local time.
