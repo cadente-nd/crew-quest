@@ -30,6 +30,7 @@ export interface ActiveTopicDTO {
   alreadySubmitted: boolean;
   completed: number;
   total: number;
+  eventStatus: EventStatus;
 }
 
 export interface RevealSubmissionDTO {

@@ -58,6 +58,13 @@ export default function EventHome() {
           <p>Keep your notifications on — the next one drops soon!</p>
         </div>
       )}
+      {data.eventStatus === "revealed" && (
+        <a href={`/event/${id}/reveal`} style={{ display: "block", marginTop: 16 }}>
+          <button style={{ width: "100%", padding: 16, borderRadius: 20, border: "none", background: "#A06CD5", color: "#fff", fontWeight: 800, fontSize: 18 }}>
+            🎬 Watch the reveal
+          </button>
+        </a>
+      )}
     </main>
   );
 }

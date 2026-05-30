@@ -45,6 +45,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       alreadySubmitted,
       completed,
       total,
+      eventStatus: ev.status,
     };
     return ok(payload);
   } catch (e) {
