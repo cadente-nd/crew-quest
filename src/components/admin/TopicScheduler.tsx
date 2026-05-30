@@ -8,6 +8,7 @@ export function TopicScheduler({ eventId, topics }: { eventId: string; topics: T
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [firingId, setFiringId] = useState<string | null>(null);
 
   async function add(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -39,14 +40,40 @@ export function TopicScheduler({ eventId, topics }: { eventId: string; topics: T
     }
   }
 
+  async function fireNow(topicId: string) {
+    if (!confirm("Fire this topic now? Players will be notified immediately.")) return;
+    setFiringId(topicId);
+    setErr("");
+    try {
+      const res = await fetch(`/api/events/${eventId}/topics/${topicId}/fire`, { method: "POST" });
+      const json = await res.json();
+      if (json.ok) router.refresh();
+      else setErr(json.error || "Failed to fire topic");
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setFiringId(null);
+    }
+  }
+
   const field = { padding: 10, borderRadius: 10, border: "1px solid #DDD", fontSize: 15 } as const;
   return (
     <section style={{ display: "grid", gap: 12 }}>
       <h2 style={{ fontSize: 20, fontWeight: 700 }}>Topics</h2>
       <div style={{ display: "grid", gap: 8 }}>
         {topics.map((t) => (
-          <div key={t.id} style={{ padding: 12, borderRadius: 12, background: "#fff" }}>
-            <strong>{t.title}</strong> — {new Date(t.scheduledAt).toLocaleString()} · {t.windowMinutes}m · {t.status}
+          <div
+            key={t.id}
+            style={{ padding: 12, borderRadius: 12, background: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}
+          >
+            <span>
+              <strong>{t.title}</strong> — {new Date(t.scheduledAt).toLocaleString()} · {t.windowMinutes}m · {t.status}
+            </span>
+            {t.status === "scheduled" && (
+              <Button onClick={() => fireNow(t.id)} disabled={firingId === t.id}>
+                {firingId === t.id ? "Firing…" : "🔥 Fire now"}
+              </Button>
+            )}
           </div>
         ))}
       </div>
