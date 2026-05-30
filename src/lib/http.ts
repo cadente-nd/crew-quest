@@ -5,5 +5,5 @@ export function ok<T>(data: T, init?: number) {
 }
 
 export function fail(message: string, status = 400, extra?: Record<string, unknown>) {
-  return NextResponse.json({ ok: false, error: message, ...extra }, { status });
+  return NextResponse.json({ ...extra, ok: false, error: message }, { status });
 }

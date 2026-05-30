@@ -10,7 +10,12 @@ globalForMongoose._mongoose = cache;
 export async function dbConnect(): Promise<typeof mongoose> {
   if (cache.conn) return cache.conn;
   if (!cache.promise) {
-    cache.promise = mongoose.connect(env().MONGODB_URI, { bufferCommands: false });
+    cache.promise = mongoose
+      .connect(env().MONGODB_URI, { bufferCommands: false })
+      .catch((err) => {
+        cache.promise = null;
+        throw err;
+      });
   }
   cache.conn = await cache.promise;
   return cache.conn;
