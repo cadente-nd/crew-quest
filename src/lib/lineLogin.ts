@@ -38,7 +38,9 @@ export async function exchangeCode(code: string): Promise<TokenResponse> {
     body,
   });
   if (!res.ok) throw new Error("token exchange failed: " + (await res.text()));
-  return (await res.json()) as TokenResponse;
+  const data = (await res.json()) as TokenResponse;
+  if (!data.id_token) throw new Error("token response missing id_token");
+  return data;
 }
 
 /** Verify the LINE id_token signature and claims; returns the LINE userId (sub) and name. */
@@ -46,6 +48,7 @@ export async function verifyIdToken(idToken: string): Promise<{ sub: string; nam
   const { payload } = await jwtVerify(idToken, JWKS, {
     issuer: "https://access.line.me",
     audience: env().LINE_LOGIN_CHANNEL_ID,
+    requiredClaims: ["sub"],
   });
   return { sub: String(payload.sub), name: String(payload.name ?? "") };
 }

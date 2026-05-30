@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
   if (!code || !state || state !== expected) {
     return NextResponse.redirect(env().APP_BASE_URL.replace(/\/$/, "") + "/admin?error=state");
   }
+  store.delete("crewquest_oauth_state");
   try {
     const { id_token } = await exchangeCode(code);
     const { sub, name } = await verifyIdToken(id_token);
